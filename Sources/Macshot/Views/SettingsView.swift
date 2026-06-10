@@ -5,6 +5,13 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("General") {
+                Toggle("Start Macshot at login", isOn: $viewModel.settings.launchAtLogin)
+                    .onChange(of: viewModel.settings.launchAtLogin) { _, enabled in
+                        Task { await viewModel.setLaunchAtLogin(enabled) }
+                    }
+            }
+
             Section("Hotkeys") {
                 hotkeyRow(
                     title: "Screenshot",

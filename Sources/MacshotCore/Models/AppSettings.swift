@@ -7,6 +7,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var screenshotHotkey: HotkeyBinding
     public var gifHotkey: HotkeyBinding
     public var hasCompletedPermissionOnboarding: Bool
+    public var launchAtLogin: Bool
 
     public init(
         dimOpacity: Double = 0.35,
@@ -14,7 +15,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
         maxRecordingDuration: TimeInterval = 30,
         screenshotHotkey: HotkeyBinding = .defaultScreenshot,
         gifHotkey: HotkeyBinding = .defaultGIF,
-        hasCompletedPermissionOnboarding: Bool = false
+        hasCompletedPermissionOnboarding: Bool = false,
+        launchAtLogin: Bool = true
     ) {
         self.dimOpacity = dimOpacity
         self.gifFPS = gifFPS
@@ -22,6 +24,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         self.screenshotHotkey = screenshotHotkey
         self.gifHotkey = gifHotkey
         self.hasCompletedPermissionOnboarding = hasCompletedPermissionOnboarding
+        self.launchAtLogin = launchAtLogin
     }
 
     public static let `default` = AppSettings()
@@ -31,7 +34,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case dimOpacity, gifFPS, maxRecordingDuration, screenshotHotkey, gifHotkey, hasCompletedPermissionOnboarding
+        case dimOpacity, gifFPS, maxRecordingDuration, screenshotHotkey, gifHotkey, hasCompletedPermissionOnboarding, launchAtLogin
     }
 
     public init(from decoder: Decoder) throws {
@@ -45,5 +48,6 @@ public struct AppSettings: Codable, Sendable, Equatable {
             Bool.self,
             forKey: .hasCompletedPermissionOnboarding
         ) ?? false
+        launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
     }
 }

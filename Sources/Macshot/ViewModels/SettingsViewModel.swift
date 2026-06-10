@@ -32,6 +32,7 @@ final class SettingsViewModel {
     func load() async {
         settings = await settingsStore.current()
         await refreshPermissionStatus()
+        await refreshLaunchAtLoginStatus()
         onHotkeysChanged?(settings)
     }
 
@@ -93,6 +94,24 @@ final class SettingsViewModel {
 
     func openNotificationSettings() {
         PermissionManager.openNotificationSettings()
+    }
+
+    func refreshLaunchAtLoginStatus() async {
+        let systemEnabled = LaunchAtLoginService.isEnabled
+        guard systemEnabled != settings.launchAtLogin else { return }
+        settings.launchAtLogin = systemEnabled
+        try? await settingsStore.save(settings)
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) async {
+        do {
+            try LaunchAtLoginService.setEnabled(enabled)
+            settings.launchAtLogin = enabled
+            await save()
+        } catch {
+            settings.launchAtLogin = !enabled
+            saveMessage = "Could not update launch at login."
+        }
     }
 
     func markPermissionOnboardingCompleted() async {

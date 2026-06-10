@@ -7,7 +7,7 @@ A native macOS menu bar app for **region screenshots** and **region GIF recordin
 - **Region screenshot** — freezes the screen, dims the overlay, crosshair cursor, drag to select, PNG copied to clipboard
 - **Region GIF** — same selection UI, then records the live region and copies an animated GIF to clipboard
 - **Multi-display** — overlay on every connected display
-- **Settings** — dim opacity, GIF FPS, max recording duration, permission status
+- **Settings** — dim opacity, GIF FPS, max recording duration, launch at login, permission status
 
 ## Hotkeys
 
@@ -50,11 +50,11 @@ If macOS blocks launch the first time, right-click the app → **Open**, or use 
 
 ## Usage
 
-1. Launch Macshot — it runs as a menu bar agent (no Dock icon).
+1. Launch Macshot — it runs as a menu bar agent (no Dock icon) and starts automatically at login.
 2. Press `⌘⇧4` or choose **Capture Screenshot** from the menu.
 3. Drag a rectangle on the frozen overlay; release to copy PNG to clipboard.
 4. Press `⌘⇧3` or choose **Record GIF** to select a region, then click **Stop** on the HUD when done.
-5. Open **Settings** from the menu to customize hotkeys, dim opacity, GIF FPS, and max duration.
+5. Open **Settings** from the menu to customize hotkeys, dim opacity, GIF FPS, max duration, and launch at login.
 
 Press `Esc` during region selection or GIF recording to cancel (recording is discarded, nothing copied).
 

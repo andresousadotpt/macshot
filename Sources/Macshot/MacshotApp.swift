@@ -45,8 +45,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, Observable {
         }
 
         Task { @MainActor in
+            await applyLaunchAtLoginPreference()
             await runPermissionOnboarding()
         }
+    }
+
+    private func applyLaunchAtLoginPreference() async {
+        let settings = await settingsStore.current()
+        guard settings.launchAtLogin != LaunchAtLoginService.isEnabled else { return }
+        try? LaunchAtLoginService.setEnabled(settings.launchAtLogin)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
