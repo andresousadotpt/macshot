@@ -2,26 +2,26 @@
 import PackageDescription
 
 let package = Package(
-    name: "MyApp",
+    name: "Macshot",
     platforms: [
         .macOS(.v14),
     ],
     products: [
-        .executable(name: "MyApp", targets: ["MyApp"]),
+        .executable(name: "Macshot", targets: ["Macshot"]),
     ],
     dependencies: [],
     targets: [
-        .target(name: "MyAppCore"),
+        .target(name: "MacshotCore"),
         .executableTarget(
-            name: "MyApp",
-            dependencies: ["MyAppCore"],
+            name: "Macshot",
+            dependencies: ["MacshotCore"],
             resources: [
                 .process("Resources"),
             ]
         ),
         .testTarget(
-            name: "MyAppCoreTests",
-            dependencies: ["MyAppCore"]
+            name: "MacshotCoreTests",
+            dependencies: ["MacshotCore"]
         ),
     ]
 )

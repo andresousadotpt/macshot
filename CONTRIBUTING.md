@@ -1,11 +1,11 @@
 # Contributing
 
-Thank you for your interest in contributing. This project is a macOS app built with Swift Package Manager. This guide covers setup, proposing changes, and pull request expectations.
+Thank you for your interest in contributing. Macshot is a macOS menu bar app built with Swift Package Manager.
 
 ## Before you start
 
 - Read the [README](README.md) for install and usage.
-- Browse [open issues](https://github.com/andresousadotpt/macskeleton/issues) and [pull requests](https://github.com/andresousadotpt/macskeleton/pulls) to avoid duplicate work.
+- Browse [open issues](https://github.com/andresousadotpt/macshot/issues) and [pull requests](https://github.com/andresousadotpt/macshot/pulls) to avoid duplicate work.
 - For larger changes, open an issue first to discuss the approach.
 
 ## Requirements
@@ -17,29 +17,27 @@ Thank you for your interest in contributing. This project is a macOS app built w
 ## Getting started
 
 ```bash
-git clone https://github.com/andresousadotpt/macskeleton.git
-cd macskeleton
+git clone https://github.com/andresousadotpt/macshot.git
+cd macshot
 make build
 make run
 make test
 make app      # release .app in ./dist/ — use for manual QA
 ```
 
-If you bootstrapped a new app from this template, use your app's repo URL instead.
-
 ## Project layout
 
 | Target | Purpose |
 | ------ | ------- |
-| **MyAppCore** | Models, persistence, pure logic — no UI imports |
-| **MyApp** | SwiftUI views, AppKit bridges, app shell |
+| **MacshotCore** | Models, persistence, pure logic — no UI imports |
+| **Macshot** | SwiftUI views, AppKit bridges, app shell |
 
-- New models/settings → `Sources/MyAppCore/Models/`
-- File I/O and config → `Sources/MyAppCore/Services/` or `Utilities/`
-- UI screens → `Sources/MyApp/Views/`
-- AppKit bridges → `Sources/MyApp/Support/`
+- New models/settings → `Sources/MacshotCore/Models/`
+- File I/O and config → `Sources/MacshotCore/Services/` or `Utilities/`
+- UI screens → `Sources/Macshot/Views/`
+- AppKit bridges → `Sources/Macshot/Support/`
 
-AI coding agents should read [AGENTS.md](AGENTS.md) for the bootstrap checklist and deeper conventions.
+AI coding agents should read [AGENTS.md](AGENTS.md) for deeper conventions.
 
 ## How to contribute
 
@@ -61,8 +59,8 @@ Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md). D
 1. Fork the repo and create a branch from `main`.
 2. Make focused changes — one logical change per PR when possible.
 3. Run `make build` before opening the PR.
-4. Run `make test` when you change **MyAppCore** logic.
-5. For UI changes, note manual QA steps (`make app` → open `dist/{APP_BUNDLE_NAME}.app`).
+4. Run `make test` when you change **MacshotCore** logic.
+5. For UI changes, note manual QA steps (`make app` → open `dist/macshot.app`).
 6. Open a PR against `main` and fill out the [pull request template](.github/pull_request_template.md).
 
 ### Commit messages
@@ -77,14 +75,14 @@ Use conventional prefixes when they fit:
 
 ## Code guidelines
 
-- **MyAppCore** must not import SwiftUI or AppKit.
+- **MacshotCore** must not import SwiftUI or AppKit.
 - Match existing naming, structure, and patterns in the file you are editing.
 - Avoid drive-by refactors unrelated to your change.
 - Do not commit `.build/`, `dist/`, `.DS_Store`, or release artifacts.
 
 ### Testing
 
-Tests live in `Tests/MyAppCoreTests/` and target **MyAppCore** only.
+Tests live in `Tests/MacshotCoreTests/` and target **MacshotCore** only.
 
 ```bash
 make test

@@ -28,7 +28,10 @@ cp "$ROOT/packaging/App.entitlements" "$BUNDLE/Contents/entitlements.plist"
 
 if [[ ! -f "$RESOURCES_DIR/Logo.png" ]]; then
   echo "==> Generating AppIcon.png (no Logo.png in Resources)"
-  swift "$ROOT/packaging/generate-icon.swift" "$ROOT/packaging/AppIcon.png"
+  ICON_GEN="$(mktemp -t macshot-icon-gen.XXXXXX)"
+  swiftc "$ROOT/packaging/generate-icon.swift" -o "$ICON_GEN" -framework AppKit -framework Foundation
+  "$ICON_GEN" "$ROOT/packaging/AppIcon.png"
+  rm -f "$ICON_GEN"
   SRC_ICON="$ROOT/packaging/AppIcon.png"
 else
   SRC_ICON="$RESOURCES_DIR/Logo.png"

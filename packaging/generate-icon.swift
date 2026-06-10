@@ -15,7 +15,7 @@ background.setFill()
 NSBezierPath(roundedRect: rect, xRadius: 96, yRadius: 96).fill()
 
 let symbolConfig = NSImage.SymbolConfiguration(pointSize: 220, weight: .semibold)
-if let symbol = NSImage(systemSymbolName: "app.fill", accessibilityDescription: nil)?
+if let symbol = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: nil)?
     .withSymbolConfiguration(symbolConfig) {
     let symbolRect = NSRect(
         x: (size.width - 260) / 2,

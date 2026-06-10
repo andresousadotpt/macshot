@@ -1,54 +1,31 @@
 # AGENTS.md
 
-Instructions for AI coding agents working on a **macOS Swift app** bootstrapped from **macskeleton**.
+Instructions for AI coding agents working on **Macshot**.
 
 ## Project overview
 
-- **What this is:** A native macOS app template. The default placeholder app shows a single SwiftUI window. Replace it with your product logic.
+- **What this is:** A native macOS menu bar app for region screenshots and GIF recording.
 - **Platform:** macOS 14 (Sonoma) or later. Swift Package Manager project; no Xcode project file.
 - **License:** MIT
-- **Template repo:** https://github.com/andresousadotpt/macskeleton
+- **Repo:** https://github.com/andresousadotpt/macshot
 
-## Bootstrap checklist (new app from skeleton)
-
-When creating a new app, update **all** of the following. Keep names consistent across files.
-
-| Step | File / path | What to change |
-| ---- | ----------- | -------------- |
-| 1 | `packaging/app.env` | All identity variables (primary config for CI + packaging) |
-| 2 | `packaging/Info.plist` | `CFBundleName`, `CFBundleDisplayName`, `CFBundleExecutable`, `CFBundleIdentifier`, copyright |
-| 3 | `Package.swift` | Package name, product name, target names |
-| 4 | `Sources/MyApp/` → `Sources/{AppName}/` | Rename directory and `@main` app file |
-| 5 | `Sources/MyAppCore/` → `Sources/{AppName}Core/` | Rename directory |
-| 6 | `Tests/MyAppCoreTests/` → `Tests/{AppName}CoreTests/` | Rename directory and imports |
-| 7 | `README.md` | App name, description, install URLs |
-| 8 | `CHANGELOG.md` | App name and initial release notes |
-| 9 | `.github/ISSUE_TEMPLATE/config.yml` | Support/security URLs (if repo URL changed) |
-| 10 | GitHub repo | Create new repo; add `HOMEBREW_TAP_TOKEN` secret for releases |
-
-### `packaging/app.env` reference
+## App identity (`packaging/app.env`)
 
 ```bash
-APP_BUNDLE_NAME=myapp          # dist/myapp.app (lowercase bundle folder)
-APP_EXECUTABLE=MyApp           # SPM executable target; also CFBundleExecutable
-APP_PACKAGE=MyApp              # Package.swift name
-APP_CORE=MyAppCore             # Core target name
-APP_DISPLAY_NAME=MyApp         # Human-readable name (Homebrew cask)
-APP_BUNDLE_ID=com.example.myapp
-APP_SUPPORT_DIR=MyApp          # ~/Library/Application Support/MyApp
+APP_BUNDLE_NAME=macshot
+APP_EXECUTABLE=Macshot
+APP_PACKAGE=Macshot
+APP_CORE=MacshotCore
+APP_DISPLAY_NAME=Macshot
+APP_BUNDLE_ID=com.macshot
+APP_SUPPORT_DIR=Macshot
 GITHUB_OWNER=andresousadotpt
-GITHUB_REPO=myapp              # GitHub repo name (not full URL)
-CASK_NAME=myapp                # Homebrew cask name
+GITHUB_REPO=macshot
+CASK_NAME=macshot
 HOMEBREW_TAP=andresousadotpt/homebrew-tap
 ```
 
 **Do not rename** `Makefile`, `packaging/build-app.sh`, `packaging/bump-version.sh`, or workflow files — they read from `app.env`.
-
-After bootstrap:
-
-```bash
-make build && make test && make app
-```
 
 ## Architecture
 
@@ -56,133 +33,95 @@ Two Swift targets with strict separation of concerns:
 
 | Target | Role | Depends on |
 |--------|------|------------|
-| **MyAppCore** | Models, persistence, pure logic (no UI) | Foundation only |
-| **MyApp** | SwiftUI views, AppKit bridges, app shell | MyAppCore |
+| **MacshotCore** | Models, image/GIF encoding, settings persistence | Foundation, CoreGraphics, ImageIO |
+| **Macshot** | SwiftUI shell, AppKit overlays, ScreenCaptureKit bridges | MacshotCore |
 
 ```
 Sources/
-├── MyAppCore/          # Testable, UI-free core
-│   ├── Models/
-│   ├── Services/
-│   └── Utilities/
-└── MyApp/              # macOS app shell
-    ├── MyAppApp.swift  # @main entry
-    ├── ViewModels/
-    ├── Views/
-    ├── Support/        # AppKit bridges
-    └── Resources/      # Logo.png (optional; auto-generates icon if missing)
+├── MacshotCore/
+│   ├── Models/         # CaptureRect, AppSettings, DisplaySnapshot
+│   └── Services/       # DisplaySnapshotService, ImageCropper, GIFEncoder, SettingsStore
+└── Macshot/
+    ├── MacshotApp.swift
+    ├── ViewModels/     # CaptureCoordinator, SettingsViewModel
+    ├── Views/          # SettingsView
+    ├── Support/        # Region overlay, hotkeys, clipboard, GIF capture bridges
+    └── Resources/
 ```
+
+### Capture flows
+
+1. **Screenshot:** Hotkey → freeze all displays (`CGDisplayCreateImage`) → per-display overlay → crop frozen image → PNG → clipboard.
+2. **GIF:** Hotkey → same selection overlay → `SCStream` with `sourceRect` → frame buffer → `GIFEncoder` → clipboard.
 
 ### Key design choices
 
-- **View models** should use `@MainActor @Observable` (Observation framework, not Combine).
-- **Persistence** should use `actor` types for thread-safe file I/O when you add storage.
-- **File writes** should go through atomic write helpers — never write user data files directly in place.
-- **App config** typically lives at `~/Library/Application Support/{APP_SUPPORT_DIR}/`.
+- **View models** use `@MainActor @Observable` (Observation framework, not Combine).
+- **Persistence** uses `actor` types (`SettingsStore`, `GIFRecorder`) for thread-safe state.
+- **Settings** live at `~/Library/Application Support/Macshot/settings.json` (atomic writes).
+- **Menu bar agent:** `LSUIElement = true` in `packaging/Info.plist` (no Dock icon).
+- **Global hotkeys:** CGEvent tap (`headInsertEventTap`) intercepts and suppresses system shortcuts — defaults `⌘⇧4` (screenshot) / `⌘⇧3` (GIF); requires Accessibility; user-configurable via `HotkeyBinding` in settings.
 
 ### UI stack
 
-- **SwiftUI** for windows and settings.
-- **AppKit** only where SwiftUI is insufficient (`NSViewRepresentable`, menu bar, custom text views).
+- **SwiftUI** for menu bar and settings.
+- **AppKit** for region selection overlay, crosshair cursor, recording HUD.
+- **ScreenCaptureKit** for live GIF region capture (requires Screen Recording permission).
 
 ## Build and run
 
-All commands run from the repo root:
-
 ```bash
 make build    # swift build (debug)
-make run      # build + swift run (uses APP_EXECUTABLE from app.env)
-make test     # swift test — requires full Xcode, not Command Line Tools alone
+make run      # build + swift run
+make test     # swift test — requires full Xcode
 make app      # release .app bundle in ./dist/
 make clean    # remove .build/ and dist/
 ```
 
 ### Important runtime gotchas
 
-1. **Features that require a `.app` bundle** (notifications, some entitlements) only work after `make app`, not `make run` / `swift run`.
-2. **Version source of truth:** `packaging/Info.plist` (`CFBundleShortVersionString`).
+1. **Packaged app required** for full menu bar / permission behavior — use `make app`, not only `swift run`.
+2. **Screen Recording permission** required for GIF; screenshots use display capture at selection time.
+3. **Version source of truth:** `packaging/Info.plist` (`CFBundleShortVersionString`).
 
 ## Testing
 
-Tests live in `Tests/MyAppCoreTests/` and target **MyAppCore only**. UI and AppKit code is not unit-tested.
+Tests live in `Tests/MacshotCoreTests/` and target **MacshotCore only**. UI and AppKit code is not unit-tested.
 
 ```bash
 make test
-swift test --filter MyAppCoreTests.testMarketingVersionIsNonEmpty
+swift test --filter MacshotCoreTests.testMarketingVersionIsNonEmpty
 ```
-
-Use temporary directories for file I/O tests and clean up in `defer`. Prefer deterministic dates over `Date()` when testing time-based logic.
 
 ## Code style and conventions
 
-### Swift language
-
 - **Swift tools version:** 6.0 (`Package.swift`).
 - **Minimum deployment:** macOS 14.
-- Prefer `Sendable`, `Codable`, and `Equatable` on models in MyAppCore.
-- Use `public` on MyAppCore types consumed by the app target.
-- Mark UI-only types `internal` (default) in MyApp.
-
-### Naming and organization
-
-- New **models/settings** → `Sources/MyAppCore/Models/`
-- New **file I/O or config logic** → `Sources/MyAppCore/Services/` or `Utilities/`
-- New **screens** → `Sources/MyApp/Views/`
-- New **AppKit bridges** → `Sources/MyApp/Support/`
-
-### Patterns to avoid
-
-- Do not add UI imports (`SwiftUI`, `AppKit`) to MyAppCore.
-- Do not add heavy dependencies without strong justification.
-- Minimize scope: match existing style, don't refactor unrelated code.
+- Prefer `Sendable`, `Codable`, and `Equatable` on models in MacshotCore.
+- Use `public` on MacshotCore types consumed by the app target.
+- Do not add UI imports (`SwiftUI`, `AppKit`) to MacshotCore.
+- New **models/settings** → `Sources/MacshotCore/Models/`
+- New **file I/O or encoding** → `Sources/MacshotCore/Services/`
+- New **screens** → `Sources/Macshot/Views/`
+- New **AppKit bridges** → `Sources/Macshot/Support/`
 
 ## Packaging and release
 
-| File | Purpose |
-|------|---------|
-| `packaging/app.env` | App identity — CI and build scripts source this |
-| `packaging/build-app.sh` | Assembles `dist/{APP_BUNDLE_NAME}.app` |
-| `packaging/Info.plist` | Bundle metadata; version source of truth |
-| `packaging/App.entitlements` | Sandbox/entitlements for the bundle |
-| `packaging/bump-version.sh` | Bumps patch/minor/major in Info.plist |
-| `packaging/cask.rb.template` | Homebrew cask template (CI fills version/sha256) |
-| `packaging/generate-icon.swift` | Generates AppIcon when Logo.png is missing |
-| `.github/workflows/ci.yml` | Build + test on push/PR |
-| `.github/workflows/release.yml` | Version bump, build, GitHub Release, Homebrew tap |
-
-### Release flow
-
-1. **Patch releases:** merge to `main`; CI auto-bumps if tag `v{version}` already exists.
-2. **Minor/major:** run `make bump-version BUMP=minor` (or `major`), commit `packaging/Info.plist`, then merge to `main`.
-3. CI skips release on commits whose message starts with `chore: bump version`.
-4. Releases are **ad-hoc signed** — no Apple Developer ID or notarization required.
-5. `HOMEBREW_TAP_TOKEN` secret updates the separate `homebrew-tap` repo.
+See README.md. Releases are ad-hoc signed via CI on push to `main`.
 
 ## Git and PR guidelines
 
 - **Do not commit** unless explicitly asked.
 - **Do not push** unless explicitly asked.
-- Keep changes focused; avoid drive-by refactors.
-- Do not commit `.build/`, `dist/`, `.DS_Store`, or release zips.
-- Do not commit secrets (`HOMEBREW_TAP_TOKEN`, signing certificates, `.env`).
-- Prefer conventional commit prefixes: `feat:`, `fix:`, `chore:`, `docs:`.
-- Version bumps: `chore: bump version to X.Y.Z`.
-
-### Before finishing a change
-
-1. Run `make build` for compile errors.
-2. Run `make test` when MyAppCore logic changed.
-3. For UI changes, note that manual verification requires `make app`.
+- Run `make build` before finishing; run `make test` when MacshotCore logic changed.
+- For UI changes, verify with `make app` → `open dist/macshot.app`.
 
 ## Security and privacy
 
-- Keep user data **local** unless the product explicitly needs network access.
+- All capture and settings data stay **local** on the Mac.
 - Do not commit secrets or tokens.
-- CI uses repository secrets only for automated Homebrew tap updates.
 
 ## Human-facing docs
 
-- **README.md** — install, usage, release overview (keep in sync when changing user-visible behavior).
-- **AGENTS.md** (this file) — agent-oriented bootstrap, architecture, and conventions.
-
-When user-visible behavior changes, update README.md. When agent-relevant workflows change, update this file.
+- **README.md** — install, hotkeys, usage (update when user-visible behavior changes).
+- **AGENTS.md** (this file) — agent-oriented architecture and conventions.

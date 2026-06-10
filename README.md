@@ -1,59 +1,62 @@
-# macskeleton
+# Macshot
 
-A **starter template** for native macOS apps built with Swift Package Manager. Clone it (or copy the folder), rename the placeholders, implement your app logic, and ship with the same Makefile, CI, and Homebrew release pipeline used by [macdaily](https://github.com/andresousadotpt/macdaily).
+A native macOS menu bar app for **region screenshots** and **region GIF recording**. Select an area with a frozen, dimmed overlay and crosshair cursor — similar to the built-in screenshot tool — then copy the result to your clipboard.
 
-## What you get
+## Features
 
-- **Two-target layout:** `MyAppCore` (testable logic, no UI) + `MyApp` (SwiftUI shell)
-- **Makefile:** `build`, `run`, `test`, `app`, `clean`, `bump-version`
-- **CI:** build + test on push/PR to `main`
-- **Release:** auto patch bump, GitHub Release zip, Homebrew cask update to [homebrew-tap](https://github.com/andresousadotpt/homebrew-tap)
-- **Docs:** README, AGENTS.md, CONTRIBUTING, issue templates, and community files
+- **Region screenshot** — freezes the screen, dims the overlay, crosshair cursor, drag to select, PNG copied to clipboard
+- **Region GIF** — same selection UI, then records the live region and copies an animated GIF to clipboard
+- **Multi-display** — overlay on every connected display
+- **Settings** — dim opacity, GIF FPS, max recording duration, permission status
 
-## Quick start (new app from this template)
+## Hotkeys
 
-1. Copy or clone this repo into a new folder / GitHub repo.
-2. Follow the **bootstrap checklist** in [AGENTS.md](AGENTS.md) — update `packaging/app.env`, `Package.swift`, `Info.plist`, and rename `Sources/` / `Tests/` directories.
-3. Replace the placeholder SwiftUI view with your app.
-4. Push to `main` — CI builds and tests; release workflow publishes when CI succeeds.
+| Action | Default hotkey |
+| ------ | -------------- |
+| Screenshot | `⌘⇧4` |
+| Record GIF | `⌘⇧3` |
 
-```bash
-git clone https://github.com/andresousadotpt/macskeleton.git my-new-app
-cd my-new-app
-# Ask an agent to run the AGENTS.md bootstrap checklist, then:
-make build
-make run
-make app
-open dist/myapp.app   # path uses APP_BUNDLE_NAME from packaging/app.env
-```
+While Macshot is running, these replace the matching **macOS screenshot shortcuts**. Hotkeys are configurable in **Settings**. **Accessibility** permission is required for global hotkey interception. You can also trigger captures from the menu bar icon.
 
-Requirements: macOS 14 (Sonoma) or later, Xcode Command Line Tools. Full Xcode is needed for `make test`.
+## Requirements
 
-## Install (after you publish your app)
+- macOS 14 (Sonoma) or later
+- **Accessibility** permission (required to override global screenshot hotkeys)
+- **Accessibility**, **Screen Recording**, and **Notifications** — Macshot requests these shortly after first launch
 
-### Option A — Build from source (recommended)
+## Install
 
-No Gatekeeper warnings when you build locally.
+### Build from source (recommended)
 
 ```bash
-git clone https://github.com/andresousadotpt/myapp.git
-cd myapp
+git clone https://github.com/andresousadotpt/macshot.git
+cd macshot
 make app
-open dist/myapp.app
+open dist/macshot.app
 ```
 
-### Option B — Homebrew
+### Homebrew
 
 ```bash
 brew tap andresousadotpt/tap
-brew install --cask myapp
+brew install --cask macshot
 ```
+
+### GitHub Release
+
+Download `macshot-{version}.zip` from [Releases](https://github.com/andresousadotpt/macshot/releases), unzip, and open the app.
 
 If macOS blocks launch the first time, right-click the app → **Open**, or use System Settings → Privacy & Security → **Open Anyway**.
 
-### Option C — GitHub Release
+## Usage
 
-Download `{app}-{version}.zip` from [Releases](https://github.com/andresousadotpt/myapp/releases), unzip, and open the app.
+1. Launch Macshot — it runs as a menu bar agent (no Dock icon).
+2. Press `⌘⇧4` or choose **Capture Screenshot** from the menu.
+3. Drag a rectangle on the frozen overlay; release to copy PNG to clipboard.
+4. Press `⌘⇧3` or choose **Record GIF** to select a region, then click **Stop** on the HUD when done.
+5. Open **Settings** from the menu to customize hotkeys, dim opacity, GIF FPS, and max duration.
+
+Press `Esc` during region selection or GIF recording to cancel (recording is discarded, nothing copied).
 
 ## Development
 
@@ -65,43 +68,33 @@ make app      # release .app in ./dist/
 make clean    # remove build artifacts
 ```
 
+### Project layout
+
+| Target | Purpose |
+| ------ | ------- |
+| **MacshotCore** | Models, image/GIF encoding, settings — no UI imports |
+| **Macshot** | SwiftUI shell, AppKit overlays, ScreenCaptureKit bridges |
+
+AI agents should read [AGENTS.md](AGENTS.md) for architecture and conventions.
+
 ## Releasing
 
-Version lives in `packaging/Info.plist` (`CFBundleShortVersionString`). Push to `main` and GitHub Actions will:
-
-1. Auto-bump the patch version if `v{current}` already exists (e.g. `0.1.0` → `0.1.1`)
-2. Build the `.app` (ad-hoc signed)
-3. Publish a GitHub Release zip
-4. Update the Homebrew cask in [homebrew-tap](https://github.com/andresousadotpt/homebrew-tap)
-
-For a **minor** or **major** release, bump locally first:
+Version lives in `packaging/Info.plist` (`CFBundleShortVersionString`). Push to `main` and GitHub Actions will build, publish a release zip, and update the Homebrew cask.
 
 ```bash
 make bump-version BUMP=minor   # or BUMP=major
 git add packaging/Info.plist && git commit -m "chore: bump version to X.Y.Z"
 ```
 
-Then merge to `main`. CI will use that version as-is (no tag exists yet) and publish it.
-
-### CI secrets
-
-| Secret | Required | Purpose |
-| ------ | -------- | ------- |
-| `HOMEBREW_TAP_TOKEN` | For automated tap updates | GitHub PAT with `contents: write` on `homebrew-tap` |
-
-Apple Developer ID / notarization is **not** required. Releases are ad-hoc signed.
-
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). AI agents should read [AGENTS.md](AGENTS.md) first.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 | Document | Purpose |
 | -------- | ------- |
-| [AGENTS.md](AGENTS.md) | Bootstrap checklist, architecture, conventions |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [AGENTS.md](AGENTS.md) | Architecture and agent conventions |
 | [SUPPORT.md](SUPPORT.md) | Help and FAQs |
 | [SECURITY.md](SECURITY.md) | Report vulnerabilities privately |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 
 ## License

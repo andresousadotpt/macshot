@@ -13,7 +13,7 @@ Security fixes are applied to the latest release on `main`. Older releases are n
 
 If you discover a security issue, please report it privately rather than opening a public issue.
 
-**Preferred:** Use [GitHub private vulnerability reporting](https://github.com/andresousadotpt/macskeleton/security/advisories/new) if available.
+**Preferred:** Use [GitHub private vulnerability reporting](https://github.com/andresousadotpt/macshot/security/advisories/new) if available.
 
 **Alternative:** Contact the maintainer via GitHub ([@andresousadotpt](https://github.com/andresousadotpt)).
 
@@ -28,7 +28,7 @@ Please do not disclose the issue publicly until a fix is available, unless we ag
 
 ## Scope
 
-Apps built from this template are typically **local-first** macOS applications. Reports we are interested in include:
+Macshot is a **local-first** macOS application. Reports we are interested in include:
 
 - Unauthorized access to or corruption of user data or config
 - Sandbox or entitlement misconfigurations that expand attack surface

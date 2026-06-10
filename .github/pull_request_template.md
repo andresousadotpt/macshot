@@ -17,13 +17,13 @@
 ## Checklist
 
 - [ ] `make build` succeeds
-- [ ] `make test` run (if **MyAppCore** logic changed)
+- [ ] `make test` run (if **MacshotCore** logic changed)
 - [ ] Manual QA noted below (if UI or AppKit changed)
 - [ ] User-facing behavior reflected in README (if applicable)
 
 ## Manual QA
 
-<!-- For UI/AppKit changes: steps taken with `make app` → `open dist/myapp.app` -->
+<!-- For UI/AppKit changes: steps taken with `make app` → `open dist/macshot.app` -->
 
 - [ ] Not applicable (logic/docs only)
 

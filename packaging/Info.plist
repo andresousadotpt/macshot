@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>myapp</string>
+    <string>macshot</string>
     <key>CFBundleDisplayName</key>
-    <string>MyApp</string>
+    <string>Macshot</string>
     <key>CFBundleExecutable</key>
-    <string>MyApp</string>
+    <string>Macshot</string>
     <key>CFBundleIdentifier</key>
-    <string>com.example.myapp</string>
+    <string>com.macshot</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundlePackageType</key>
@@ -21,6 +21,8 @@
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSMultipleInstancesProhibited</key>
+    <true/>
+    <key>LSUIElement</key>
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>

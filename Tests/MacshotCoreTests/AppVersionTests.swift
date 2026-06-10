@@ -1,5 +1,5 @@
 import XCTest
-@testable import MyAppCore
+@testable import MacshotCore
 
 final class AppVersionTests: XCTestCase {
     func testMarketingVersionIsNonEmpty() {
