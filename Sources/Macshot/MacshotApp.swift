@@ -65,22 +65,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, Observable {
         hotkeyService?.register(screenshot: settings.screenshotHotkey, gif: settings.gifHotkey)
 
         try? await Task.sleep(for: .seconds(1))
-        await PermissionManager.requestAll()
+
+        let status = await PermissionManager.currentStatus()
+        let isFirstRun = !settings.hasCompletedPermissionOnboarding
+        let shouldShowWindow = isFirstRun || status.anyMissing
+        if shouldShowWindow {
+            let mode: PermissionsOnboardingView.Mode = isFirstRun ? .onboarding : .settings
+            PermissionsWindowController.present(viewModel: settingsViewModel, mode: mode)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+
         await settingsViewModel.refreshPermissionStatus()
         hotkeyService?.register(screenshot: settings.screenshotHotkey, gif: settings.gifHotkey)
-
-        let shouldShowWindow = !settings.hasCompletedPermissionOnboarding
-            || !settingsViewModel.allPermissionsGranted
-        if shouldShowWindow {
-            PermissionsWindowController.present(viewModel: settingsViewModel)
-        }
-
-        if !settings.hasCompletedPermissionOnboarding {
-            var updated = settings
-            updated.hasCompletedPermissionOnboarding = true
-            try? await settingsStore.save(updated)
-            settingsViewModel.settings = updated
-        }
     }
 }
 

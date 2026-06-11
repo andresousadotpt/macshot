@@ -19,9 +19,11 @@ public enum ImageCropper {
             width: selection.globalRect.width,
             height: selection.globalRect.height
         )
+        // CGImage uses a top-left origin; Cocoa screen coordinates use bottom-left.
+        let sourceY = snapshot.screenFrame.height - localRect.origin.y - localRect.height
         let pixelRect = CGRect(
             x: localRect.origin.x * snapshot.scaleFactor,
-            y: localRect.origin.y * snapshot.scaleFactor,
+            y: sourceY * snapshot.scaleFactor,
             width: localRect.width * snapshot.scaleFactor,
             height: localRect.height * snapshot.scaleFactor
         )

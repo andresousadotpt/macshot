@@ -5,7 +5,7 @@ import SwiftUI
 final class PermissionsWindowController: NSWindowController {
     private static var activeController: PermissionsWindowController?
 
-    static func present(viewModel: SettingsViewModel) {
+    static func present(viewModel: SettingsViewModel, mode: PermissionsOnboardingView.Mode = .settings) {
         if let activeController {
             activeController.showWindow(nil)
             activeController.window?.makeKeyAndOrderFront(nil)
@@ -13,15 +13,15 @@ final class PermissionsWindowController: NSWindowController {
             return
         }
 
-        let controller = PermissionsWindowController(viewModel: viewModel)
+        let controller = PermissionsWindowController(viewModel: viewModel, mode: mode)
         activeController = controller
         controller.showWindow(nil)
         controller.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    private init(viewModel: SettingsViewModel) {
-        let view = PermissionsOnboardingView(viewModel: viewModel) {
+    private init(viewModel: SettingsViewModel, mode: PermissionsOnboardingView.Mode) {
+        let view = PermissionsOnboardingView(viewModel: viewModel, mode: mode) {
             Task { @MainActor in
                 PermissionsWindowController.activeController?.closeWindow()
             }

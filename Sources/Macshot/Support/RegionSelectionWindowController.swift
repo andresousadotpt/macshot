@@ -2,32 +2,34 @@ import AppKit
 import MacshotCore
 
 final class RegionSelectionWindowController: NSWindowController {
-    private let selectionView = RegionSelectionView()
+    let displayID: CGDirectDisplayID
+    private(set) var screenFrame: CGRect
+    let regionView = RegionSelectionView()
 
     init(snapshot: DisplaySnapshot, dimOpacity: CGFloat) {
+        displayID = snapshot.displayID
+        screenFrame = snapshot.screenFrame
+
         let window = KeyableWindow(
             contentRect: snapshot.screenFrame,
             styleMask: .borderless,
             backing: .buffered,
             defer: false,
-            screen: NSScreen.screens.first { screen in
-                guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
-                    return false
-                }
-                return CGDirectDisplayID(number.uint32Value) == snapshot.displayID
-            }
+            screen: Self.screen(for: snapshot.displayID)
         )
         window.level = .screenSaver
         window.isOpaque = false
         window.backgroundColor = .clear
         window.ignoresMouseEvents = false
+        window.acceptsMouseMovedEvents = true
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
         super.init(window: window)
 
-        selectionView.snapshot = snapshot
-        selectionView.dimOpacity = dimOpacity
-        window.contentView = selectionView
+        regionView.snapshot = snapshot
+        regionView.screenFrame = snapshot.screenFrame
+        regionView.dimOpacity = dimOpacity
+        window.contentView = regionView
     }
 
     @available(*, unavailable)
@@ -39,10 +41,29 @@ final class RegionSelectionWindowController: NSWindowController {
         onComplete: @escaping (CaptureRect) -> Void,
         onCancel: @escaping () -> Void
     ) {
-        selectionView.onComplete = onComplete
-        selectionView.onCancel = onCancel
+        if let screen = Self.screen(for: displayID) {
+            screenFrame = screen.frame
+            regionView.screenFrame = screen.frame
+            window?.setFrame(screen.frame, display: true)
+        }
+
+        regionView.onComplete = onComplete
+        regionView.onCancel = onCancel
         showWindow(nil)
+        window?.orderFrontRegardless()
+    }
+
+    func focus() {
         window?.makeKeyAndOrderFront(nil)
-        window?.makeFirstResponder(selectionView)
+        window?.makeFirstResponder(regionView)
+    }
+
+    private static func screen(for displayID: CGDirectDisplayID) -> NSScreen? {
+        NSScreen.screens.first { screen in
+            guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
+                return false
+            }
+            return CGDirectDisplayID(number.uint32Value) == displayID
+        }
     }
 }

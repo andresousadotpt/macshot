@@ -3,35 +3,21 @@ import MacshotCore
 
 final class RegionSelectionView: NSView {
     var snapshot: DisplaySnapshot?
+    var screenFrame: CGRect = .zero
     var dimOpacity: CGFloat = 0.35
     var onComplete: ((CaptureRect) -> Void)?
     var onCancel: (() -> Void)?
 
     private var anchorPoint: CGPoint?
     private var currentPoint: CGPoint?
-    private var trackingArea: NSTrackingArea?
+    private var mouseLocation: CGPoint?
 
     override var acceptsFirstResponder: Bool { true }
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        window?.makeFirstResponder(self)
-        updateTrackingAreas()
-    }
-
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        if let trackingArea {
-            removeTrackingArea(trackingArea)
-        }
-        let area = NSTrackingArea(
-            rect: bounds,
-            options: [.activeAlways, .mouseMoved, .enabledDuringMouseDrag, .inVisibleRect],
-            owner: self,
-            userInfo: nil
-        )
-        addTrackingArea(area)
-        trackingArea = area
+        window?.acceptsMouseMovedEvents = true
+        syncMouseLocation()
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -55,38 +41,10 @@ final class RegionSelectionView: NSView {
         } else {
             context.fill(bounds)
         }
-    }
 
-    override func mouseDown(with event: NSEvent) {
-        anchorPoint = convert(event.locationInWindow, from: nil)
-        currentPoint = anchorPoint
-        needsDisplay = true
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        currentPoint = convert(event.locationInWindow, from: nil)
-        needsDisplay = true
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        currentPoint = convert(event.locationInWindow, from: nil)
-        guard let snapshot, let selection = currentSelectionRect(), selection.width >= 1, selection.height >= 1 else {
-            onCancel?()
-            return
+        if let mouseLocation, bounds.contains(mouseLocation) {
+            SelectionCursor.draw(at: mouseLocation, in: context)
         }
-
-        let globalRect = CGRect(
-            x: selection.origin.x + snapshot.screenFrame.origin.x,
-            y: selection.origin.y + snapshot.screenFrame.origin.y,
-            width: selection.width,
-            height: selection.height
-        )
-        let capture = CaptureRect(
-            globalRect: globalRect,
-            displayID: snapshot.displayID,
-            scaleFactor: snapshot.scaleFactor
-        )
-        onComplete?(capture)
     }
 
     override func keyDown(with event: NSEvent) {
@@ -101,6 +59,59 @@ final class RegionSelectionView: NSView {
         cancelSelection()
     }
 
+    // MARK: - Screen-coordinate selection (routed by RegionSelectionCoordinator)
+
+    func beginSelection(atScreen point: NSPoint) {
+        let local = localPoint(fromScreen: point)
+        anchorPoint = local
+        currentPoint = local
+        mouseLocation = local
+        needsDisplay = true
+    }
+
+    func updateSelection(atScreen point: NSPoint) {
+        currentPoint = localPoint(fromScreen: point)
+        mouseLocation = currentPoint
+        needsDisplay = true
+    }
+
+    func endSelection(atScreen point: NSPoint) {
+        currentPoint = localPoint(fromScreen: point)
+        guard let snapshot, let selection = currentSelectionRect(), selection.width >= 1, selection.height >= 1 else {
+            anchorPoint = nil
+            currentPoint = nil
+            needsDisplay = true
+            return
+        }
+
+        let globalRect = CGRect(
+            x: selection.origin.x + screenFrame.origin.x,
+            y: selection.origin.y + screenFrame.origin.y,
+            width: selection.width,
+            height: selection.height
+        )
+        onComplete?(
+            CaptureRect(
+                globalRect: globalRect,
+                displayID: snapshot.displayID,
+                scaleFactor: snapshot.scaleFactor
+            )
+        )
+    }
+
+    func updateHover(atScreen point: NSPoint) {
+        let local = localPoint(fromScreen: point)
+        mouseLocation = bounds.contains(local) ? local : nil
+        needsDisplay = true
+    }
+
+    func clearHover() {
+        mouseLocation = nil
+        needsDisplay = true
+    }
+
+    // MARK: - Private
+
     private func cancelSelection() {
         anchorPoint = nil
         currentPoint = nil
@@ -110,6 +121,16 @@ final class RegionSelectionView: NSView {
     private func currentSelectionRect() -> CGRect? {
         guard let anchorPoint, let currentPoint else { return nil }
         return CaptureRect.rectFromPoints(anchorPoint, currentPoint)
+    }
+
+    private func localPoint(fromScreen point: NSPoint) -> CGPoint {
+        CaptureRect.globalToLocal(point: point, screenFrame: screenFrame)
+    }
+
+    private func syncMouseLocation() {
+        let local = localPoint(fromScreen: NSEvent.mouseLocation)
+        mouseLocation = bounds.contains(local) ? local : nil
+        needsDisplay = true
     }
 
     private func drawSizeLabel(_ text: String, near rect: CGRect) {

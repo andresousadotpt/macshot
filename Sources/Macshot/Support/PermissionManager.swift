@@ -19,6 +19,11 @@ struct PermissionStatus: Equatable, Sendable {
 
 @MainActor
 enum PermissionManager {
+    /// UserNotifications requires a packaged `.app` bundle; `swift run` uses `.build/.../debug` and crashes.
+    static var canUseUserNotifications: Bool {
+        Bundle.main.bundleURL.pathExtension == "app"
+    }
+
     static func currentStatus() async -> PermissionStatus {
         PermissionStatus(
             accessibility: HotkeyService.isAccessibilityGranted,
@@ -28,11 +33,14 @@ enum PermissionManager {
     }
 
     static func requestAll() async {
+        // Notifications must be requested first while the app is still frontmost.
+        // Accessibility and Screen Recording prompts open System Settings and prevent
+        // the notification permission dialog from appearing.
+        await requestNotifications()
+        try? await Task.sleep(for: .milliseconds(600))
         requestAccessibility()
         try? await Task.sleep(for: .milliseconds(600))
         await requestScreenRecording()
-        try? await Task.sleep(for: .milliseconds(600))
-        await requestNotifications()
     }
 
     static func requestAccessibility() {
@@ -44,6 +52,8 @@ enum PermissionManager {
     }
 
     static func requestNotifications() async {
+        guard canUseUserNotifications else { return }
+        NSApp.activate(ignoringOtherApps: true)
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
     }
 
@@ -69,6 +79,7 @@ enum PermissionManager {
     }
 
     private static func checkNotifications() async -> Bool {
+        guard canUseUserNotifications else { return false }
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         return settings.authorizationStatus == .authorized
     }

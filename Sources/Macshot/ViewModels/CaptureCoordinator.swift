@@ -145,6 +145,7 @@ final class CaptureCoordinator {
     }
 
     private func showNotification(title: String, body: String) {
+        guard PermissionManager.canUseUserNotifications else { return }
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
         let content = UNMutableNotificationContent()
