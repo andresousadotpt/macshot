@@ -8,7 +8,7 @@ cask "{{CASK_NAME}}" do
   desc "{{APP_DESCRIPTION}}"
   homepage "https://github.com/{{GITHUB_OWNER}}/{{GITHUB_REPO}}"
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "{{APP_BUNDLE_NAME}}.app"
 
