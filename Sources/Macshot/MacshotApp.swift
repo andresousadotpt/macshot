@@ -73,9 +73,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, Observable {
             let mode: PermissionsOnboardingView.Mode = isFirstRun ? .onboarding : .settings
             PermissionsWindowController.present(viewModel: settingsViewModel, mode: mode)
             NSApp.activate(ignoringOtherApps: true)
+        } else {
+            await settingsViewModel.refreshPermissionStatus()
         }
 
-        await settingsViewModel.refreshPermissionStatus()
         hotkeyService?.register(screenshot: settings.screenshotHotkey, gif: settings.gifHotkey)
     }
 }

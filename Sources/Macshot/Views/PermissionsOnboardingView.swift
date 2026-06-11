@@ -21,6 +21,10 @@ struct PermissionsOnboardingView: View {
 
     @State private var currentStepIndex = 0
 
+    private var permissionGrantSignature: String {
+        "\(viewModel.notificationsGranted)-\(viewModel.accessibilityGranted)-\(viewModel.screenRecordingGranted)"
+    }
+
     var body: some View {
         Group {
             switch mode {
@@ -31,10 +35,11 @@ struct PermissionsOnboardingView: View {
             }
         }
         .padding(24)
-        .frame(width: 480)
-        .task {
-            await viewModel.refreshPermissionStatus()
-        }
+        .frame(
+            width: 480,
+            height: 472,
+            alignment: .topLeading
+        )
     }
 
     private var onboardingView: some View {
@@ -81,8 +86,8 @@ struct PermissionsOnboardingView: View {
                 .keyboardShortcut(.defaultAction)
             }
         }
-        .onAppear {
-            syncStepIndex(with: items)
+        .onChange(of: permissionGrantSignature) {
+            syncStepIndex(with: permissionItems)
         }
     }
 
